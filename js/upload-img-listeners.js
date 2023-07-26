@@ -26,6 +26,7 @@ const createUploadImageHandler = (uploadContainer, form, pristineReset, cancel) 
 
   cancel.addEventListener('click', hideOverlay);
   document.addEventListener('keydown', hideOverlay);
-}
+  return { removeOverlayListeners, hideOverlay };
+};
 
 export {createUploadImageHandler};

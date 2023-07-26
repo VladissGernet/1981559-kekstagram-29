@@ -6,6 +6,7 @@ const transformImage = (scalableImage, scalingValue) => {
 };
 
 const createScaleControlling = (controlValue, image, increase, decrease) => {
+  console.log('puk');
   controlValue.value = `${SCALE_IMAGE_DEFAULT}%`;
   let currentValue = parseInt(controlValue.value, 10);
   transformImage(image, currentValue);

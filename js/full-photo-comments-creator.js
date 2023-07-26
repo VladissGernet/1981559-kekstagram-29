@@ -1,12 +1,13 @@
 import {bigPictureCommentsList} from './full-photo-click-handler.js';
 
-const generateComments = (valueOfShownComments, pictureId, arrayOfObjects) => {
-  const messagesArray = arrayOfObjects[pictureId].comments;
+const commentElement = document.querySelector('#big-picture').querySelector('[data-comment-item]');
+
+const generateComments = (valueOfShownComments, pictureId, comments) => {
   bigPictureCommentsList.innerHTML = '';
 
   const messagesFragment = document.createDocumentFragment();
-
-  messagesArray.some((comment, index) => {
+  comments.some((comment, index) => {
+    const currentComment = commentElement.cloneNode(true);
     if (index + 1 > valueOfShownComments) {
       return true;
     }

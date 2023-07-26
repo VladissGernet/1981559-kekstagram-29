@@ -1,3 +1,5 @@
+import {onCardClick} from './full-photo-click-handler.js';
+
 const renderPhotoArray = (photoArray) => {
   const pictureTemplate = document.querySelector('#picture')
     .content
@@ -16,6 +18,8 @@ const renderPhotoArray = (photoArray) => {
   });
 
   pictureContainer.appendChild(photosFragment);
+
+  pictureContainer.addEventListener('click', (evt) => onCardClick(evt, photoArray));
 };
 
 export {renderPhotoArray};

@@ -1,10 +1,12 @@
 import {DEFAULT_SHOWN_COMMENTS} from './constats.js';
 import {fillFullPhotoCardData} from './full-photo-creator.js';
 import {generateComments} from './full-photo-comments-creator.js';
-import {createBigPictureListeners} from './full-photo-close-listeners.js';
+import {
+  hideBigPictureByClick,
+  hideBigPictureByKeydown
+} from './full-photo-close-listeners.js';
 import {pluralize} from './util.js';
 
-const cardPictureWall = document.querySelector('.pictures');
 const bigPicture = document.querySelector('.big-picture');
 const bigPictureCommentsList = bigPicture.querySelector('.social__comments');
 const showMoreButton = bigPicture.querySelector('.comments-loader');
@@ -17,61 +19,59 @@ const bigPictureData = {
 const commentsWordsArray = ['комментарий', 'комментария', 'комментариев'];
 const closeButton = bigPicture.querySelector('.big-picture__cancel');
 
-const createClickHandler = (arrayOfObjects) => {
-  const onCardClick = (evt) => {
-    if (evt.target.closest('.picture')) {
-      evt.preventDefault();
-      createBigPictureListeners(closeButton);
-      const selectedPictureId = evt.target.closest('.picture').dataset.pictureId;
-      const messagesArrayLength = arrayOfObjects[selectedPictureId].comments.length;
-      let currentShownCommentsValue = DEFAULT_SHOWN_COMMENTS;
+let currentShownCommentsValue = DEFAULT_SHOWN_COMMENTS;
+let totalShownCommentsValue = 0;
+let comments = [];
 
-      if (messagesArrayLength <= DEFAULT_SHOWN_COMMENTS) {
-        showMoreButton.classList.add('hidden');
-      } else {
-        showMoreButton.classList.remove('hidden');
-
-        const onClickShownMore = () => {
-          if (currentShownCommentsValue + DEFAULT_SHOWN_COMMENTS < messagesArrayLength) {
-            currentShownCommentsValue += DEFAULT_SHOWN_COMMENTS;
-          } else {
-            while (currentShownCommentsValue < messagesArrayLength) {
-              currentShownCommentsValue++;
-            }
-          }
-
-          bigPictureData.commentsCounter.textContent = `${currentShownCommentsValue} из ${String(messagesArrayLength)} комментариев`;
-          generateComments(currentShownCommentsValue, selectedPictureId, arrayOfObjects);
-
-          if (currentShownCommentsValue === messagesArrayLength) {
-            showMoreButton.classList.add('hidden');
-            showMoreButton.removeEventListener('click', onClickShownMore);
-          }
-        };
-
-        showMoreButton.addEventListener('click', onClickShownMore);
-
-        const removeShowMoreListeners = () => {
-          showMoreButton.removeEventListener('click', onClickShownMore);
-          closeButton.removeEventListener('click', removeShowMoreListeners);
-          document.removeEventListener('keydown', removeShowMoreListeners);
-        };
-
-        closeButton.addEventListener('click', removeShowMoreListeners);
-        document.addEventListener('keydown', removeShowMoreListeners);
-      }
-
-      fillFullPhotoCardData(bigPictureData, selectedPictureId, arrayOfObjects);
-
-      if (messagesArrayLength < DEFAULT_SHOWN_COMMENTS + 1) {
-        bigPictureData.commentsCounter.textContent = pluralize(messagesArrayLength, commentsWordsArray);
-      }
-
-      generateComments(DEFAULT_SHOWN_COMMENTS, selectedPictureId, arrayOfObjects);
+const onClickShowMore = () => {
+  if (currentShownCommentsValue + DEFAULT_SHOWN_COMMENTS < totalShownCommentsValue) {
+    currentShownCommentsValue += DEFAULT_SHOWN_COMMENTS;
+  } else {
+    // Можно использовать дельту между общим и текущим значением
+    while (currentShownCommentsValue < totalShownCommentsValue) {
+      currentShownCommentsValue++;
     }
-  };
+  }
 
-  cardPictureWall.addEventListener('click', onCardClick);
+  bigPictureData.commentsCounter.textContent = `${currentShownCommentsValue} из ${String(totalShownCommentsValue)} комментариев`;
+
+  generateComments(currentShownCommentsValue, totalShownCommentsValue, comments);
+
+  if (currentShownCommentsValue === totalShownCommentsValue) {
+    showMoreButton.classList.add('hidden');
+  }
 };
 
-export {bigPicture, bigPictureCommentsList, showMoreButton, createClickHandler};
+const onCardClick = (evt, pictures) => {
+  const selectedPictureElement = evt.target.closest('.picture');
+  if (selectedPictureElement !== null) {
+    evt.preventDefault();
+    document.body.classList.add('modal-open');
+    bigPicture.classList.remove('hidden');
+    document.addEventListener('keydown', hideBigPictureByKeydown);
+    const selectedPictureId = selectedPictureElement.dataset.pictureId;
+    const selectedPicture = pictures.find(({id}) => id === Number(selectedPictureId));
+    comments = selectedPicture.comments;
+    totalShownCommentsValue = selectedPicture.comments.length;
+
+    if (totalShownCommentsValue <= DEFAULT_SHOWN_COMMENTS) {
+      showMoreButton.classList.add('hidden');
+    } else {
+      showMoreButton.classList.remove('hidden');
+    }
+
+    fillFullPhotoCardData(bigPictureData, selectedPictureId, pictures);
+
+    if (totalShownCommentsValue < DEFAULT_SHOWN_COMMENTS + 1) {
+      bigPictureData.commentsCounter.textContent = pluralize(totalShownCommentsValue, commentsWordsArray);
+    }
+
+    generateComments(DEFAULT_SHOWN_COMMENTS, selectedPictureId, comments);
+  }
+};
+
+closeButton.addEventListener('click', hideBigPictureByClick);
+showMoreButton.addEventListener('click', onClickShowMore);
+
+
+export {bigPicture, bigPictureCommentsList, showMoreButton, onCardClick};
